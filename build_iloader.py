@@ -17,8 +17,8 @@ BASE = Path(__file__).resolve().parent
 REPO = "https://github.com/nab138/iloader.git"
 TAG = "v2.4.0"
 COMMIT = "902597564315442f00ab299dcc758ee0e13b8fa8"
-UPSTREAM_SHA256 = "38a81529dc87fda47a75d8fc33accab4157040cce4f930cf0608e71fa342edeb"
-PATCHED_SHA256 = "e90bdfadbea0133d253d941e35f6053aa872033fb1f32251d3c6297048d27d8c"
+UPSTREAM_SHA256 = "a802df70446ab49acaac2d4a007d8f846353d32f3f4d1a41755e9c581b684ce3"
+PATCHED_SHA256 = "d6ef92bfe5cd1d4c21e669ca5f5b90084208cab52e5e6888b7db0b976a65873f"
 RELATIVE_SOURCE = Path("src-tauri/src/pairing.rs")
 
 
