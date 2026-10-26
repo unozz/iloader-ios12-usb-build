@@ -1,0 +1,60 @@
+name: Build iLoader for iOS 12 USB
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: iloader-ios12-usb
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # Refuse private repos, where macOS execution may incur usage charges.
+    if: github.event.repository.private == false
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      CARGO_BUILD_JOBS: '1'
+      CARGO_PROFILE_RELEASE_DEBUG: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.4'
+      - name: Prepare Rust on the temporary runner
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - name: Build the reviewed source correction
+        run: python3 build_iloader.py
+      - name: Package local-use Mac application
+        shell: python
+        run: |
+          from pathlib import Path
+          import hashlib
+          import platform
+          import subprocess
+          apps = list(Path('Build-iLoader/target/release/bundle/macos').glob('*.app'))
+          assert len(apps) == 1, 'Expected one built application'
+          assert platform.machine() == 'arm64', 'Expected Apple Silicon runner'
+          app = apps[0]
+          subprocess.run(['codesign', '--force', '--sign', '-', '--timestamp=none', str(app)], check=True)
+          subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
+          subprocess.run(['ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', str(app), 'iloader-ios12-usb-arm64.zip'], check=True)
+          archive = Path('iloader-ios12-usb-arm64.zip')
+          Path('SHA256SUMS.txt').write_text(hashlib.sha256(archive.read_bytes()).hexdigest() + '  ' + archive.name + '\n')
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iloader-ios12-usb-arm64
+          path: |
+            iloader-ios12-usb-arm64.zip
+            SHA256SUMS.txt
+          retention-days: 1
+          if-no-files-found: error
